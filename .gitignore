@@ -1,3 +1,16 @@
 *.bak
 Termux-Apktool/
 *.session
+doxmin.py
+doxmin.py
+Track.txt
+pending.txt
+users.json
+results/
+hasil.txt
+debug_id.txt
+fix.py
+fix2.py
+fix3.py
+__pycache__/
+*.pyc

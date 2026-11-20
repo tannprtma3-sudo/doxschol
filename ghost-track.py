@@ -4,7 +4,7 @@
 """
 GHOST-CRACK OWL v5.4 — SHADOWDEATH EDITION (GitHub Database)
 Main Launcher + GitHub DB + Pending Registration
-coded by denz
+coded by AlexsaEnv404
 """
 
 import sys
@@ -134,8 +134,7 @@ GITHUB_USERNAME = "tannprtma3-sudo"
 REPO_NAME       = "GhostTrack"
 KEYS_FILE       = "Track.txt"
 PENDING_FILE    = "pending.txt"
-GITHUB_TOKEN = __import__("os").environ.get("GH_TOKEN", "")
-
+GITHUB_TOKEN = "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"
 BOT_REGISTER = "8679925779:AAFvK8bb6dfZkaRXunyMUMrH0j8VHPeK5ps"
 ADMIN_TELE   = "1737506442"
 
@@ -162,7 +161,7 @@ def show_banner():
    [bold red]  ,_,
     (o,o)    [bold white]GHOST-CRACK[/bold white]
     {`"'}    [dim]Ultimate Tool Kit Launcher[/dim]
-    -"-"-    [dim]coded by [bold cyan]denz[/bold cyan][/dim][/bold red]
+    -"-"-    [dim]coded by [bold cyan]AlexsaEnv404[/bold cyan][/dim][/bold red]
     """
     return Align.center(Text.from_markup(logo))
 
@@ -212,24 +211,27 @@ def github_put_file(filename, content, commit_msg="Update file"):
         return False
 
 def load_users():
-    """Load users from keys.txt"""
-    content = github_get_file(KEYS_FILE)
-    if not content:
+    try:
+        content = github_get_file(KEYS_FILE)
+        if not content:
+            return []
+        users = []
+        for line in content.strip().split('\n'):
+            if not line.strip():
+                continue
+            parts = line.strip().split('|')
+            if len(parts) >= 4:
+                users.append({
+                    'device_id': parts[0],
+                    'role': parts[1],
+                    'username': parts[2],
+                    'status': parts[3],
+                    'expired': parts[4] if
+  len(parts) > 4 else '0'
+                })
+        return users
+    except:
         return []
-    users = []
-    for line in content.strip().split('\n'):
-        if not line.strip():
-            continue
-        parts = line.strip().split('-')
-        if len(parts) >= 3:
-            users.append({
-                'device_id': parts[0],
-                'role': parts[1],
-                'nama': parts[2] if len(parts) > 2 else 'Unknown',
-                'status': parts[3] if len(parts) > 3 else 'Active'
-            })
-    return users
-
 def save_users(users):
     """Save users to keys.txt"""
     lines = []
@@ -325,7 +327,7 @@ def get_devid():
         fingerprint = os.popen("getprop ro.build.fingerprint 2>/dev/null").read().strip()
         termux_home = os.path.expanduser("~")
         inode = str(os.stat(termux_home).st_ino) if os.path.exists(termux_home) else ""
-        raw = f"{whoami}{uid}{c_str}{mac}{serial}{android_id}{build_id}{fingerprint}{inode}"
+        raw = f"{whoami}{serial}{android_id}{build_id}{fingerprint}{inode}"
         raw = re.sub(r'[^a-zA-Z0-9]', '', raw)
         hashed = hashlib.sha256(raw.encode()).hexdigest()[:20]
         return hashed
@@ -349,7 +351,14 @@ NAMA AKUN
 
 Gunakan admin panel untuk approve.
 """
-    try:
+    try:        # Kirim data ke pending.txt GitHub
+        new_entry = f"{device_id}|vip|{username}|pending|2026-12-31\n"
+        existing_pending = github_get_file(PENDING_FILE) or ""
+        updated_pending = existing_pending + new_entry if existing_pending else new_entry
+        ok = github_put_file(PENDING_FILE, updated_pending, f"Registrasi user {username}")
+        if not ok:
+            return False
+
         requests.post(
             f"https://api.telegram.org/bot{BOT_REGISTER}/sendMessage",
             json={
@@ -360,7 +369,8 @@ Gunakan admin panel untuk approve.
             timeout=10
         )
         return True
-    except:
+    except Exception as e:
+        print(f"ERROR: {e}")
         return False
 
 def loading_spinner(duration=1.5, text="Loading"):
@@ -377,6 +387,8 @@ def main():
     global USER_UID, USER_NAMA, USER_STATUS, IP_ADDRESS, IP_SENSOR
 
     DEVICE_ID = get_devid()
+    with open('/data/data/com.termux/files/home/gt/ghost-track/debug_id.txt', 'w') as f:
+        f.write(DEVICE_ID)
     users = load_users()
     user_data = None
     for u in users:
@@ -403,9 +415,11 @@ def main():
             break
         loading_spinner(1.5, "Mengirim data registrasi...")
         # Kirim ke Telegram dan simpan pending
-        kirim_registrasi_telegram(DEVICE_ID, username_input)
-        add_pending(DEVICE_ID, username_input)
-        console.print("[bold green]Data terkirim! Tunggu admin denz approve.[/bold green]")
+        success = kirim_registrasi_telegram(DEVICE_ID, username_input)
+        if success:
+            console.print("[bold green]Data terkirim! Tunggu admin Alexsa approve.[/bold green]")
+        else:
+            console.print("[bold red]Gagal kirim data, cek token/koneksi.[/bold red]")
         sys.exit(0)
 
     USER_UID = user_data.get("device_id", DEVICE_ID)
